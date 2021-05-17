@@ -1,0 +1,94 @@
+---
+title: "Shockbox Analysis"
+author: "Isla Weber"
+date: "5/6/2021"
+output: html_document
+---
+load necessary libraries
+```{r}
+library(ggplot2)
+library(readr)
+library(tidyr)
+```
+
+
+# Import data
+
+To import, *replace the filepath* below with the appropriate path location. (Run getwd() in the console to see where the filepath should start from, should be folder where this file is saved). Must be a csv file formatted with the following column names:
+
+- *freezing* :: percent of time spent freezing, should just be a number
+
+- *id* :: contains the mouse ID (can be letters and/or numbers)
+
+- *day* :: contains the day of the experiment, written as the following: sefla, seflb, recall1, recall2, recall3, recall4, recall5
+
+- *condition* :: contains the mouse condition, written as the following: control, ptsd
+
+*change the cohort variable to current cohort when you analyze!!*
+```{r}
+data <- read_csv("PTSD1_freezing.csv")
+cohort <- "PTSD1"
+data_wide <- spread(data, day, freezing)
+head(data)
+head(data_wide)
+```
+
+# Create Plots
+This line is used to tell R what order we want the days to go in on the graph
+```{r}
+data$day <- factor(data$day, levels = c("sefla", "seflb", "recall1", "recall2", "recall3", "recall4", "recall5"
+                                        ))
+```
+
+The ggplot function loads the data and plots. It is very flexible, you can add a lot of features. To find a way to change or add to this, search something like "ggplot R barplot change colors" and you will find examples of code to try and incorporate. 
+
+The aes argument allows you to indicate the groups (fill), y axis (freezing), and x axis(day)
+
+geom_bar adds the bar plot, geom_line adds the lines, geom_point adds the dots.
+
+```{r}
+#select the colors which will be associated with each group using universal color codes
+group.colors = c(control = "#263FFF", ptsd = "#D80505")
+
+
+#This will plot the grouped bar plot
+groupedbar <- ggplot(data, aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.9) +
+    ggtitle("SEFL Freezing") + ylab("% freezing") + ylim(c(0,75)) +
+    scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+
+#This will plot the averages in a bar plot then plot the lines for each mouse ID
+groupedbar_line <- ggplot(data, aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=freezing, group=id, colour=condition)) + 
+    geom_point(aes(x=day, y=freezing, group=id, colour=condition))+
+    ggtitle("SEFL Freezing") + ylab("% freezing") + ylim(c(0,75)) +
+    scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+
+#This will plot the grouped bar plot plus the individual points
+groupedbar_points <- ggplot(data, aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.8) +
+    geom_point(aes(y=freezing, x=day),
+           stat="identity",
+           position = position_dodge(width = .9),
+           alpha=1,
+           size=.75) +
+    ggtitle("SEFL Freezing") + ylab("% freezing") +
+    scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+    
+#This will plot just the line plots for each mouse, color coded by group
+line_by_id <- ggplot(data=data, aes(x=day, y=freezing, group=id, colour=condition)) + geom_line() + geom_point() +
+    ggtitle("SEFL Freezing") + ylab("% freezing") +
+    scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+```
+
+# Display Plots
+```{r}
+groupedbar
+
+groupedbar_line
+
+groupedbar_points
+
+line_by_id
+```

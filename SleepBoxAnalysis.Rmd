@@ -1,0 +1,49 @@
+---
+title: "Sleep Box Analysis"
+author: "Isla Weber"
+date: "5/8/2021"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(readr)
+```
+
+```{r}
+data <- read_csv("SleepBox/PTSD1_sleep_amplitude.csv")
+View(data)
+
+#select the colors which will be associated with each group using universal color codes
+group.colors = c(control = "#263FFF", ptsd = "#D80505")
+```
+
+```{r}
+grouped_bar <- ggplot(data, aes(fill=condition, y=amplitude, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.9) + 
+    ggtitle("SleepBox Activity Amplitude") + 
+    ylab("Activity") + 
+    scale_x_discrete(labels=c("baseline" = "Baseline", "recall5" = "1 month post trauma")) +
+    scale_fill_manual(values=group.colors) + 
+    scale_color_manual(values=group.colors) + 
+    ylim(c(0,.15)) + 
+    theme(axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"))
+
+groupedbar_line <- ggplot(data, aes(fill=condition, y=amplitude, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=amplitude, group=id, colour=condition)) + 
+    geom_point(aes(x=day, y=amplitude, group=id, colour=condition))+
+    ggtitle("SleepBox Activity Amplitude") + 
+    ylab("Activity") +
+    scale_x_discrete(labels=c("baseline" = "Baseline", "recall5" = "1 month post trauma")) +
+    scale_fill_manual(values=group.colors) + 
+    scale_color_manual(values=group.colors) + 
+    ylim(c(0,.15)) +
+    theme(axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"))
+```
+
+```{r}
+grouped_bar
+
+groupedbar_line
+```

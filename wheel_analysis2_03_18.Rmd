@@ -1,0 +1,129 @@
+---
+title: "Wheel_Analysis_3_18"
+author: "Isla Weber"
+date: "3/25/2021"
+output: html_document
+---
+Load necessary packages
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(chron)
+library(stringr)
+library(data.table)
+library(lubridate)
+library(base)
+```
+First:
+1. Save file with 3 minute bins, don't use sensor names, don't include header, date/time as format
+1. Open file in Excel
+3. Save file as .csv
+4. Import .csv dataset in R, setting all number columns as double and the bin column as datetime with the correct format (dmy hm)
+
+Load in wireless wheel data (.cvs format)
+```{r}
+wwdf <- read_csv("/Users/isla/Documents/Turi_lab/WirelessWheels/20210318_105523_optimizeformat1.csv", col_names=TRUE)
+
+wwdf <- wwdf %>% mutate(Bin = mdy_hm(Bin))
+
+head(wwdf) #check to see that data looks good
+
+# How many wheels are in the data set?
+wheelnum <- dim(wwdf)[2] - 6
+envnum <- 3
+
+#Set which columns are wheel and environmental
+wheelcols <- c(4:(3+wheelnum))
+envcols <- c((3+wheelnum+1):(3+wheelnum+3))
+```
+
+Plot environmental data:
+```{r eval= FALSE}
+
+hum_plot <- ggplot(wwdf, aes(x=time, y=_Humidity)) + geom_line()
+
+hum_plot
+
+plot(wwdf$Humidity[1:200], type = "l")
+
+#temp_plot <- 
+  
+#light_plot <- 
+
+```
+Plot behavioral data:
+```{r}
+avghourly_bycage <- wwdf %>% 
+  mutate(hour = hour(Bin)) %>% 
+  group_by(hour) %>% 
+  summarise(
+    control_5ht2a4b = mean(`Control 5HT2A4b`, na.rm = TRUE),
+    control_sert26b = mean(`Control Sert26b`, na.rm = TRUE),
+    control_dock05b = mean(`Control Dock05b`, na.rm = TRUE),
+    cort_5ht2a3a = mean(`Cort 5HT2A3a`, na.rm = TRUE),
+    cort_sert25c = mean(`Cort Sert25c`, na.rm = TRUE)) %>%
+  gather(cage, activity, control_5ht2a4b:cort_sert25c, factor_key=TRUE) %>%
+  ggplot(aes(hour, activity, color=cage)) +
+    geom_line() + ggtitle("Average hourly activity by cage") + ylab("wheel turns per hour")
+
+avghourly_bycondition <- wwdf %>% 
+  mutate(hour = hour(Bin)) %>% 
+  group_by(hour) %>% 
+  summarise(
+    control_5ht2a4b = mean(`Control 5HT2A4b`, na.rm = TRUE),
+    control_sert26b = mean(`Control Sert26b`, na.rm = TRUE),
+    control_dock05b = mean(`Control Dock05b`, na.rm = TRUE),
+    cort_5ht2a3a = mean(`Cort 5HT2A3a`, na.rm = TRUE),
+    cort_sert25c = mean(`Cort Sert25c`, na.rm = TRUE)) %>%
+  gather(cage, activity, control_5ht2a4b:cort_sert25c, factor_key=TRUE) %>%
+  ggplot(aes(hour, activity, color=condition)) +
+    geom_line() + ggtitle("Average hourly activity by condition")
+
+```
+
+```{r}
+avghourly_bycage
+avghourly_bycondition
+```
+
+```{r}
+wwdfsmall <- wwdf[1:100,]
+
+ggplot(data = wwdfsmall, aes(x = Bin, y = "Control 5HT2A4b")) +
+      geom_bar(stat = "identity", fill = "purple") +
+      labs(title = "Control5HT2A4b",
+           subtitle = "03_18",
+           x = "Date", y = "wheen turns")
+
+ggplot(wwdfsmall[,wheelcols], aes(x=, y= "Control Dock05b")) + geom_line()
+
+plot(wwdfsmall$Ctrl_5ht2a4b, type="l")
+```
+
+```{r eval= FALSE}
+dayaverage <- wwdf[,1:tail(wheelcols, n=1)]
+dayaverage_byhour <- dayaverage
+dayaverage <- dayaverage %>%
+  group_by(time) %>%
+  summarise_at(vars(-c(datetime, date)), funs(mean(., na.rm=TRUE)))
+
+dayave_long <- gather(dayaverage, cage, wheelspins, all_of(wheelcols-2), factor_key=TRUE)
+
+dayave_byhour <- 
+
+ggplot(data = dayave_long, aes(x=time, y=wheelspins, group=1)) + geom_line(aes(colour=cage)) + scale_x_discrete(breaks=c("00:00:00", "02:00", "04:00","06:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"),
+        labels=c("0", "2", "4","6","8","10","12","14","16","18","20","22"))
+```
+
+```{r eval= FALSE}
+plot()
+ggplot(data = wwdf, mapping = aes(x=Ctrl_5ht2a4b)) + 
+  geom_histogram(aes(y=..density..),fill="bisque",color="white",alpha=0.7) + 
+  geom_density() +
+  geom_rug() +
+  labs(x='mean education per house') +
+  theme_minimal()
+```
+
+

@@ -1,0 +1,139 @@
+---
+title: "SleepBox Analysis"
+author: "Isla Weber"
+date: "5/8/2021"
+output: html_document
+---
+```{r}
+library(readr)
+library(ggplot2)
+library(tidyverse)
+library(tibble)
+```
+Load in mouse data
+1. Go in and remove the first three rows of the counts file for each mouse (I will code this into the script when I get the chance).
+2. Write out the code to read in the csv file for each mouse (filepath starts where this markdown file is located).
+```{r}
+#cre01a1_baseline <- read_csv("SleepBox/Analysis/5ht2acre01a1baseline_PTSD1_CL_Counts.csv")
+#cre01a1_recall5 <- read_csv("SleepBox/Analysis/5ht2acre01a-1recall5_PTSD1_CL_Counts.csv")
+cre01a2_baseline <- read_csv("SleepBox/Analysis/5ht2acre01a2baseline_PTSD1_CL_Counts.csv")
+cre01a2_recall5 <- read_csv("SleepBox/Analysis/5ht2acre01a-2recall5_PTSD1_CL_Counts.csv")
+cre01a3_baseline <- read_csv("SleepBox/Analysis/5ht2acre01a3baseline_PTSD1_CL_Counts.csv")
+cre01a3_recall5 <- read_csv("SleepBox/Analysis/5ht2acre01a-3recall5_PTSD1_CL_Counts.csv")
+fl05a5_baseline <- read_csv("SleepBox/Analysis/5ht2afl05a5baseline_PTSD1_CL_Counts.csv")
+fl05a5_recall5 <- read_csv("SleepBox/Analysis/5ht2afl05a-5recall5_PTSD1_CL_Counts.csv")
+fl05a6_baseline <- read_csv("SleepBox/Analysis/5ht2afl05a6baseline_PTSD1_CL_Counts.csv")
+fl05a6_recall5 <- read_csv("SleepBox/Analysis/5ht2afl05a-6recall5_PTSD1_CL_Counts.csv")
+fl05a7_baseline <- read_csv("SleepBox/Analysis/5ht2afl05a7baseline_PTSD1_CL_Counts.csv")
+fl05a7_recall5 <- read_csv("SleepBox/Analysis/5ht2afl05a-7recall5_PTSD1_CL_Counts.csv")
+sert26a2_baseline <- read_csv("SleepBox/Analysis/sert26a2baseline_PTSD1_CL_Counts.csv")
+sert26a2_recall5 <- read_csv("SleepBox/Analysis/sert26a-2recall5_PTSD1_CL_Counts.csv")
+sert26a3_baseline <- read_csv("SleepBox/Analysis/sert26a3baseline_PTSD1_CL_Counts.csv")
+sert26a3_recall5 <- read_csv("SleepBox/Analysis/sert26a-3recall5_PTSD1_CL_Counts.csv")
+
+head(cre01a2_baseline)
+```
+
+Do a bunch of tedius and not efficient stuff with the data to get the final full dataframe in long format as desired. 
+```{r}
+library(tidyverse)
+    
+data <- tibble::lst(cre01a2_baseline, cre01a2_recall5, cre01a3_baseline, cre01a3_recall5, fl05a5_baseline, fl05a5_recall5, fl05a6_baseline, fl05a6_recall5, fl05a7_baseline, fl05a7_recall5, sert26a2_baseline, sert26a2_recall5, sert26a3_baseline, sert26a3_recall5)
+
+ids <- c("cre01a2_baseline", "cre01a2_recall5", "cre01a3_baseline", "cre01a3_recall5", "fl05a5_baseline", "fl05a5_recall5", "fl05a6_baseline", "fl05a6_recall5", "fl05a7_baseline", "fl05a7_recall5", "sert26a2_baseline", "sert26a2_recall5", "sert26a3_baseline", "sert26a3_recall5")
+
+condition <- c("ptsd", "ptsd", "control", "control", "control", "control", "ptsd", "ptsd", "control", "control", "ptsd", "ptsd", "control", "control")
+
+for (id in ids) {
+  data[[id]] <- rename(data[[id]], countsperminute = "Cnts/min")
+  data[[id]] <- data[[id]] %>% 
+  group_by(Hr) %>% 
+  summarise(mean = mean(countsperminute, na.rm = TRUE))
+} 
+
+data <- tibble::lst(
+       "cre01a2_baseline" = mutate(data[["cre01a2_baseline"]], condition = "ptsd", id = "cre01a2", time = "baseline"),
+        "cre01a2_recall5" = mutate(data[["cre01a2_recall5"]], condition = "ptsd", id = "cre01a2", time = "recall5"),
+        "cre01a3_baseline" = mutate(data[["cre01a3_baseline"]], condition = "control", id = "cre01a3", time = "baseline"),
+        "cre01a3_recall5" = mutate(data[["cre01a3_recall5"]], condition = "control", id = "cre01a3", time = "recall5"),
+        "fl05a5_baseline" = mutate(data[["fl05a5_baseline"]], condition = "control", id = "fl05a5", time = "baseline"),
+        "fl05a5_recall5" = mutate(data[["fl05a5_recall5"]], condition = "control", id = "fl05a5", time = "recall5"),
+        "fl05a6_baseline" = mutate(data[["fl05a6_baseline"]], condition = "ptsd", id = "fl05a6", time = "baseline"),
+        "fl05a6_recall5" = mutate(data[["fl05a6_recall5"]], condition = "ptsd", id = "fl05a6", time = "recall5"),
+        "fl05a7_baseline" = mutate(data[["fl05a7_baseline"]], condition = "control", id = "fl05a7", time = "baseline"),
+        "fl05a7_recall5" = mutate(data[["fl05a7_recall5"]], condition = "control", id = "fl05a7", time = "recall5"),
+        "sert26a2_baseline" = mutate(data[["sert26a2_baseline"]], condition = "ptsd", id = "sert26a2", time = "baseline"),
+        "sert26a2_recall5" = mutate(data[["sert26a2_recall5"]], condition = "ptsd", id = "sert26a2", time = "recall5"),
+        "sert26a3_baseline" = mutate(data[["sert26a3_baseline"]], condition = "control", id = "sert26a3", time = "baseline"),
+        "sert26a3_recall5" = mutate(data[["sert26a3_recall5"]], condition = "control", id = "sert26a3", time = "recall5"))
+
+full_data <- bind_rows(data, .id = "column_label")
+```
+
+Make graphs!
+```{r}
+#select the colors which will be associated with each group using universal color codes
+group.colors = c(control = "#263FFF", ptsd = "#D80505")
+
+pre_line_by_id <- ggplot(full_data[full_data$time == "baseline",], aes(x=Hr, y=mean, group = id, colour =condition)) + geom_line() +
+    ggtitle("Sleep-Wake pre trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)") + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)+ ylim(c(0,.25))
+
+post_line_by_id <- ggplot(full_data[full_data$time == "recall5",], aes(x=Hr, y=mean, group = id, colour =condition)) + geom_line() +
+    ggtitle("Sleep-Wake post trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)") + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)+ ylim(c(0,.25))
+
+pre_line_grouped <- ggplot(full_data[full_data$time == "baseline",], aes(x=Hr, y=mean, group = id, colour =condition)) + stat_summary(aes(group=condition), fun.y=mean, geom="line") + ggtitle("Sleep-Wake pre trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)") + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors) + ylim(c(.1,.25))
+
+post_line_grouped <- ggplot(full_data[full_data$time == "recall5",], aes(x=Hr, y=mean, group = condition, colour =condition)) + stat_summary(aes(group=condition), fun.y=mean, geom="line") + ggtitle("Sleep-Wake post trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)") + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors) + ylim(c(.1,.25))
+```
+
+Plot graphs!
+```{r}
+pre_line_by_id
+post_line_by_id
+
+pre_line_grouped
+post_line_grouped
+```
+
+# Analysis of high freezers vs low freezers
+
+```{r}
+high_freeze_ids <- c("fl05a5", "fl05a7", "fl5a6", "sert26a3")
+
+freeze_high_low <- rep(NA, dim(full_data)[1])
+for (i in 1:dim(full_data)[1]){
+  if (full_data$id[i] %in% high_freeze_ids){
+    freeze_high_low[i] <- "high"
+  } else {
+    freeze_high_low[i] <- "low"
+  }
+}
+
+full_data <- cbind(full_data, freeze_high_low)
+View(full_data)
+```
+
+Make graphs!
+
+something is off with the code. I will work on it later. 
+```{r}
+pre_line_by_id_freeze <- ggplot(full_data[full_data$time == "baseline",], aes(x=Hr, y=mean, group = id, colour = freeze_high_low)) + geom_line() + ggtitle("Sleep-Wake pre trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)") + ylim(c(0,.25))
+
+post_line_by_id_freeze <- ggplot(full_data[full_data$time == "recall5",], aes(x=Hr, y=mean, group = id, colour =freeze_high_low)) + geom_line() + ggtitle("Sleep-Wake post trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)")+ ylim(c(0,.25))
+
+pre_line_grouped_freeze <- ggplot(full_data[full_data$time == "baseline",], aes(x=Hr, y=mean, group = id, colour =freeze_high_low)) + stat_summary(aes(group=condition), fun.y=mean, geom="line") + ggtitle("Sleep-Wake pre trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)") + ylim(c(0,.25))
+
+post_line_grouped_freeze <- ggplot(full_data[full_data$time == "recall5",], aes(x=Hr, y=mean, group = condition, colour =freeze_high_low)) + stat_summary(aes(group=condition), fun.y=mean, geom="line") + ggtitle("Sleep-Wake post trauma") + ylab("Mean Activity") + xlab("Hour of Day (0-23)") + ylim(c(0,.25))
+```
+
+Plot graphs!
+```{r}
+pre_line_by_id_freeze
+post_line_by_id_freeze
+
+pre_line_grouped_freeze
+post_line_grouped_freeze
+```
+
+
+
