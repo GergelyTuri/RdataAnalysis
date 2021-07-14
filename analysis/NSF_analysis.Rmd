@@ -1,0 +1,38 @@
+---
+title: "Novelty Supressed Feeding Analysis"
+author: "Isla Weber"
+date: "7/13/2021"
+output: html_document
+---
+Load libraries
+```{r}
+library(ggplot2)
+library(readr)
+library(tidyr)
+```
+
+# Import data
+
+To import, *replace the filepath* below with the appropriate path location. (Run getwd() in the console to see where the filepath should start from, should be folder where this file is saved). Must be a csv file formatted with the following column names:
+```{r}
+data <- read_csv("Context2_NSF_baseline.csv")
+cohort <- "Context2"
+head(data)
+data$Cage <- as.factor(data$Cage)
+```
+
+
+```{r}
+#This will plot the grouped bar plot plus the individual points
+groupedbar_points <- ggplot(data, aes(y=Latency, x=Cage)) + 
+    geom_bar(position="dodge", stat="summary", alpha=.8) +
+    geom_point(aes(y=Latency, x=Cage),
+           stat="identity",
+           position = position_dodge(width = .9),
+           alpha=1,
+           size=.75) +
+    ggtitle("Context 2 NSF baseline") + ylab("latency to eat")
+
+groupedbar_points
+```
+
