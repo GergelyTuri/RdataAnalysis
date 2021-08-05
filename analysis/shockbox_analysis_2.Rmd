@@ -1,0 +1,315 @@
+---
+title: "Shockbox Analysis"
+author: "Isla Weber"
+date: "5/6/2021"
+output: html_document
+---
+load necessary libraries
+```{r}
+library(ggplot2)
+library(readr)
+library(tidyr)
+```
+
+
+# Import data
+
+To import, *replace the filepath* below with the appropriate path location. (Run getwd() in the console to see where the filepath should start from, should be folder where this file is saved). Must be a csv file. 
+
+To analyze data from all cohorts, go to https://docs.google.com/spreadsheets/d/1oTD1mxHx49RlTYxX7h7U56rEziUqdsdb/edit#gid=1158166666 and create a csv of the first tab in the sheet. 
+
+```{r}
+data_raw <- read_csv("all_cohorts_freezing_temp.csv")
+head(data_raw)
+
+# for now I just want to look at recall 1-5 because they are completed, so I remove the others:
+data <- data_raw[data_raw$day != "recall6" & data_raw$day != "recall7" & data_raw$day != "NA",]
+```
+
+# Create Plots
+```{r}
+# This line is used to tell R what order we want the days to go in on the graph:
+data$day <- factor(data$day, levels = c("sefla", "seflb", "recall1", "recall2", "recall3", "recall4", "recall5"))
+
+levels(data$day) <- c("SEFL A", "SEFL B", "retrieval 1", "2", "3", "4", "5")
+
+# Create a list of all mouse IDs in the data:
+allMice <- c(unique(data$id))
+
+# Create a list of the control mice IDs:
+controlMice <- c(unique(data$id[data$condition == "control"]))
+
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
+seflMice <- allMice[allMice %!in% controlMice]
+
+data$condition[data$id %in% controlMice] <- "control"
+data$condition[data$id %in% seflMice] <- "ptsd"
+```
+
+The ggplot function loads the data and plots. It is very flexible, you can add a lot of features. To find a way to change or add to this, search something like "ggplot R barplot change colors" and you will find examples of code to try and incorporate. 
+
+The aes argument allows you to indicate the groups (fill), y axis (freezing), and x axis(day)
+
+geom_bar adds the bar plot, geom_line adds the lines, geom_point adds the dots.
+
+```{r}
+#select the colors which will be associated with each group using universal color codes
+group.colors = c(control = "azure4", ptsd = "darkorange2")
+
+#This will plot the grouped bar plot
+groupedbar <- ggplot(data, aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.9) +
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing") + ylim(c(0,100)) +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors) 
+
+
+#This will plot the averages in a bar plot then plot the lines for each mouse ID
+groupedbar_line <- ggplot(data, aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=freezing, group=id, colour=condition), size=.25) + 
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing") + ylim(c(0,100)) +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+
+#This will plot the grouped bar plot plus the individual points
+groupedbar_points <- ggplot(data, aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.8) +
+    geom_point(aes(y=freezing, x=day),
+           stat="identity",
+           position = position_dodge(width = .9),
+           alpha=1,
+           size=.75) +
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing") +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+    
+#This will plot just the line plots for each mouse, color coded by group
+line_by_id <- ggplot(data=data, aes(x=day, y=freezing, group=id, colour=condition)) + geom_line(size=.25) +
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing") +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+```
+# Plots by sex
+```{r}
+#MALES
+#This will plot the averages in a bar plot then plot the lines for each mouse ID
+male_groupedbar_line <- ggplot(data[data$sex=="male",], aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=freezing, group=id, colour=condition), size=.25) + 
+    ggtitle("SEFL Freezing - Males (N=42)") + ylab("% freezing") + 
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+
+
+#FEMALES
+#This will plot the averages in a bar plot then plot the lines for each mouse ID
+female_groupedbar_line <- ggplot(data[data$sex=="female",], aes(fill=condition, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=freezing, group=id, colour=condition), size=.25) + 
+    ggtitle("SEFL Freezing - Females (N=12)") + ylab("% freezing") +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors)
+```
+# Display Plots
+```{r}
+groupedbar
+
+groupedbar_line
+
+groupedbar_points
+
+line_by_id
+
+male_groupedbar_line
+
+female_groupedbar_line
+```
+
+# separate by resilient vs susceptible and plot
+
+Here we split up the SEFL treated mice based on recall day 5, identifying the top 30 percentile as susceptible and the bottom 30 percentile as resilient.
+```{r}
+recall5_percentiles_30_90 <- c(quantile(data$freezing[data$day == "recall5"], probs=0.3, na.rm=TRUE), quantile(data$freezing[data$day == "recall5"], probs=0.7, na.rm=TRUE))
+
+resilientMice <- data$id[data$id %in% seflMice & data$day=="recall5" & data$freezing <= recall5_percentiles_30_90[1]]
+
+susceptibleMice <- data$id[data$id %in% seflMice & data$day=="recall5" & data$freezing >= recall5_percentiles_30_90[2]]
+
+data$response[data$id %in% resilientMice] <- "resilient"
+data$response[data$id %in% susceptibleMice] <- "susceptible"
+data$response[data$id %in% controlMice] <- "control"
+```
+
+```{r}
+
+#select the colors which will be associated with each group using universal color codes
+response.colors = c(control = "gray75", resilient = "forestgreen", susceptible = "red2")
+
+groupedbar <- ggplot(data[!is.na(data$response),], aes(fill=response, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+ 
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing") + 
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors)
+
+groupedbar_line <- ggplot(data[!is.na(data$response),], aes(fill=response, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=freezing, group=id, colour=response), size=.25) + 
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing") + 
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors)
+
+groupedbar
+groupedbar_line
+```
+
+Now separate by sex:
+
+```{r}
+
+male_groupedbar <- ggplot(data[!is.na(data$response) & data$sex == "male",], aes(fill=response, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+ 
+    ggtitle("SEFL Freezing - Males (N=42)") + ylab("% freezing") +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors)
+
+male_groupedbar_line <- ggplot(data[!is.na(data$response) & data$sex =="male",], aes(fill=response, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=freezing, group=id, colour=response), size=.25) + 
+    ggtitle("SEFL Freezing - Males (N=42)") + ylab("% freezing") + 
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors)
+
+male_groupedbar
+male_groupedbar_line
+
+female_groupedbar <- ggplot(data[!is.na(data$response) & data$sex == "female",], aes(fill=response, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+ 
+    ggtitle("SEFL Freezing - Females (N=12)") + ylab("% freezing") +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors)
+
+female_groupedbar_line <- ggplot(data[!is.na(data$response) & data$sex =="female",], aes(fill=response, y=freezing, x=day)) + 
+    geom_bar(position="dodge", stat="summary", fun.y = "mean", alpha=.65)+
+    geom_line(aes(x=day, y=freezing, group=id, colour=response), size=.25) + 
+    ggtitle("SEFL Freezing - Females (N=12)") + ylab("% freezing") +
+    #scale_x_discrete(labels=c("sefla" = "Context A", "seflb" = "Context B")) +
+    scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors)
+
+female_groupedbar
+female_groupedbar_line
+```
+
+# Scatter plots
+```{r}
+data_wide <- spread(data[,c('freezing', 'id', 'day')], day, freezing)
+
+reg <- function(x, y, col) abline(lm(y~x), col=col) 
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+ usr <- par("usr"); on.exit(par(usr))
+ par(usr = c(0, 1, 0, 1))
+ r <- abs(cor(x, y))
+ txt <- format(c(r, 0.123456789), digits = digits)[1]
+ txt <- paste0(prefix, txt)
+ text(0.5, 0.5, txt, cex = 1.1, font = 4)
+}
+
+panel.lm =  function (x, y, col = par("col"), bg = NA, pch = par("pch"), 
+    cex = 1, col.smooth = "red", span = 2/3, iter = 3, ...)  {
+    points(x, y, pch = pch, col = col, bg = bg, cex = cex)
+    ok <- is.finite(x) & is.finite(y)
+    if (any(ok)) reg(x[ok], y[ok], col.smooth)
+}
+
+corrplot_all <- pairs(na.omit(data_wide[,2:8]), panel = panel.lm, main = "Correlation Matrix - Freezing (All mice, N=54)",
+    cex = 1.5, pch = 19, col = adjustcolor(4, .4), cex.labels = 2, 
+    font.labels = 2, lower.panel = panel.cor)
+corrplot_all
+
+corrplot_ptsd <- pairs(na.omit(data_wide[data_wide$id %in% seflMice,2:8]), panel = panel.lm, main = "Correlation Matrix - Freezing (PTSD mice only, N=32)",
+    cex = 1.5, pch = 19, col = adjustcolor(4, .4), cex.labels = 2, 
+    font.labels = 2, lower.panel = panel.cor)
+corrplot_ptsd
+```
+
+# Violin Plots!
+
+## by condition
+
+All mice
+```{r}
+violin_allMice <- data %>%
+  ggplot(aes(x=day,
+             y=freezing,
+             fill=condition))+
+  geom_violin(draw_quantiles = .5) + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors) +
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing")
+
+violin_allMice
+```
+
+Males
+```{r}
+violin_Males <- data[data$sex =="male",] %>%
+  ggplot(aes(x=day,
+             y=freezing,
+             fill=condition))+
+  geom_violin(draw_quantiles = .5) + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors) +
+    ggtitle("SEFL Freezing - Males (N=42)") + ylab("% freezing") 
+
+violin_Males
+```
+
+Females
+```{r}
+violin_Females <- data[data$sex =="female",] %>%
+  ggplot(aes(x=day,
+             y=freezing,
+             fill=condition))+
+  geom_violin(draw_quantiles = .5) + scale_fill_manual(values=group.colors) + scale_color_manual(values=group.colors) +
+    ggtitle("SEFL Freezing - Females (N=12)") + ylab("% freezing") 
+
+violin_Females
+```
+
+## by response
+
+All mice
+```{r}
+violin_allMice <- data[!is.na(data$response),] %>%
+  ggplot(aes(x=day,
+             y=freezing,
+             fill=response))+
+  geom_violin(draw_quantiles = .5) + scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors) + 
+    ggtitle("SEFL Freezing - All mice (N=54)") + ylab("% freezing") 
+
+violin_allMice
+```
+
+Males
+```{r}
+violin_Males <- data[!is.na(data$response) & data$sex =="male",] %>%
+  ggplot(aes(x=day,
+             y=freezing,
+             fill=response))+
+  geom_violin(draw_quantiles = .5) + scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors)+ 
+    ggtitle("SEFL Freezing - Males (N=42)") + ylab("% freezing") 
+
+violin_Males
+```
+
+Females
+```{r}
+violin_Females <- data[!is.na(data$response) & data$sex =="female",] %>%
+  ggplot(aes(x=day,
+             y=freezing,
+             fill=response))+
+  geom_violin(draw_quantiles = .5) + scale_fill_manual(values=response.colors) + scale_color_manual(values=response.colors) + 
+    ggtitle("SEFL Freezing - Females (N=12)") + ylab("% freezing") 
+
+violin_Females
+```
+
