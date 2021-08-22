@@ -1,0 +1,88 @@
+---
+title: "MLR notes"
+author: "Por, Tamas"
+date: "2021-08-22"
+output: html_document
+---
+
+MLR stands for Multiple Linear Regression
+
+## 2021-08-22
+
+The script is saved as multiple_linear_regression.R
+
+I loaded both cohorts and made a plot in order to see how our data looks like (ie. each day is a facet where freezing time frequencies are plotted - control vs PTSD). TBH I am not sure if anything would come out of this but let us see. I saved the plot as '/data/plots/freezing-control_vs_ptsd.pdf'
+
+First I made a MLR on the data as is. It would show how much condition, sex (left out eventually as all subjects were male) and cohort can predict freezing time as dependent variable.
+
+The fitted regressor looks like this:
+```{r eval = FALSE}
+summary(regressor)
+
+Call:
+lm(formula = freezing ~ day + condition + cohort, data = PTSD_training_set)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-31.092  -8.181   0.010   7.112  34.791 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   31.792      3.632   8.754 3.32e-14 ***
+day2         -20.952      4.399  -4.763 6.03e-06 ***
+day3           3.524      4.752   0.742 0.459998    
+day4         -12.468      4.469  -2.790 0.006245 ** 
+day5         -13.399      4.399  -3.046 0.002921 ** 
+day6         -13.098      4.742  -2.762 0.006766 ** 
+day7         -15.761      4.467  -3.528 0.000617 ***
+day8         -17.768      4.467  -3.978 0.000127 ***
+condition2    13.795      2.377   5.804 6.67e-08 ***
+cohortPTSD2  -14.123      2.406  -5.869 4.98e-08 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 12.41 on 107 degrees of freedom
+  (12 observations deleted due to missingness)
+Multiple R-squared:  0.4945,	Adjusted R-squared:  0.452 
+F-statistic: 11.63 on 9 and 107 DF,  p-value: 1.423e-12
+```
+
+Categorical variables were encoded and then dummy variables were created so eg. day was coded as 1, 2, ...8 and then all of them got its own dummy variable. (Meaning that day1 has its own column which is only hold true on day one, day2 is only true on day2, etc. and one of them was removed to avoid redundant dependencies - meaning that in the most simple occasion one variable can encode two states so another variable wouth make data redundant. This part is managed by R; we do not have to deal with it manually.) I a not sure though what to think about day3 being far less significant predictor than day2 for example.
+
+I made a prediction on the test set. The model appears to be useless.
+
+Anyway, I am not happy with the layout of the dataset. I think one line per mouse would fit more for a predictive model.
+To create this I first made PTSD_freezing from scratch (rbind() from PTSD1 and PTSD2) then created the wide format data frame. It is saved as './data/PTSD_freezing_wide.csv'. I encoded remaining categorical variables again.
+This time it is only 18 observations (rows) so I made the test set to contain 2 observations only.
+As 2nd cohort only goes for recall6 I took recall6 as dependent varianble and previous days as independent variables (obviously they are not really as we cannot adjust them but we would like to see if they could be used as predictors). The result shows that we cannot make any meaningful prediction based on previous days' freezing time:
+```{r eval = FALSE}
+summary(regressor)
+
+Call:
+lm(formula = recall6 ~ condition + cohort + sefla + seflb + recall1 + 
+    recall2 + recall3 + recall4 + recall5, data = PTSD_training_set)
+
+Residuals:
+     1      2      3      4      5      6      7      9     10     11     12     13     14     15     16 
+-8.894  2.595  4.935 -3.951  8.876 -8.147  4.586 -1.794  5.347  1.762  3.027 -2.903 -9.076 10.143 -6.506 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept) -2.18218   28.36114  -0.077    0.942
+condition2  14.10873   35.43852   0.398    0.707
+cohort2      1.93033   21.21821   0.091    0.931
+sefla        0.12568    0.84323   0.149    0.887
+seflb       -1.60217    1.92350  -0.833    0.443
+recall1     -0.05999    0.78699  -0.076    0.942
+recall2     -0.02151    1.28429  -0.017    0.987
+recall3     -0.58892    0.89863  -0.655    0.541
+recall4      0.74130    0.44116   1.680    0.154
+recall5      0.95601    0.67699   1.412    0.217
+
+Residual standard error: 10.7 on 5 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.8672,	Adjusted R-squared:  0.628 
+F-statistic: 3.626 on 9 and 5 DF,  p-value: 0.08488
+```
+
+The p values are all really high so apparently none of the independent variables have significant effect on recall6 freezing.
